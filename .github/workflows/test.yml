@@ -20,5 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./
+        id: result
         with:
           milliseconds: 1000
+      - run: echo "${{ steps.result.outputs.time}}" 
