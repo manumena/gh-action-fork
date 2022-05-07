@@ -1,6 +1,6 @@
 name: 'release-dcl'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+description: 'Test gh action for releasing'
+author: 'Manuel Mena'
 inputs:
   milliseconds: # change this
     required: true
