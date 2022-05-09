@@ -58,11 +58,12 @@ function run() {
             //   payload.owner.name,
             //   payload.repository.name,
             // })
-            const latestRelease = octokit.rest.repos.getLatestRelease({
+            const latestRelease = yield octokit.rest.repos.getLatestRelease({
                 owner: 'manumena',
                 repo: 'gh-action-fork'
             });
-            core.setOutput('latestRelease', JSON.stringify(latestRelease, undefined, 2));
+            // core.setOutput('latestRelease', JSON.stringify(latestRelease, undefined, 2))
+            core.setOutput('latestRelease', latestRelease);
         }
         catch (error) {
             if (error instanceof Error)

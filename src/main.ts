@@ -31,7 +31,8 @@ async function run(): Promise<void> {
       owner: 'manumena',
       repo: 'gh-action-fork'
     })
-    core.setOutput('latestRelease', JSON.stringify(latestRelease, undefined, 2))
+    // core.setOutput('latestRelease', JSON.stringify(latestRelease, undefined, 2))
+    core.setOutput('latestRelease', latestRelease)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
