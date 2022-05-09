@@ -37,21 +37,32 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const wait_1 = __nccwpck_require__(5817);
+const rest_1 = __nccwpck_require__(5375);
+const octokit = new rest_1.Octokit({});
 function run() {
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const ms = core.getInput('milliseconds');
-            core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
-            core.debug(new Date().toTimeString());
-            yield (0, wait_1.wait)(parseInt(ms, 10));
-            core.debug(new Date().toTimeString());
-            // core.setOutput('time', new Date().toTimeString())
-            // Get last release
             // Get the JSON webhook payload for the event that triggered the workflow
             const payload = JSON.stringify(github.context.payload, undefined, 2);
+            const owner = (_a = github.context.payload.owner.name) !== null && _a !== void 0 ? _a : 'manumena';
+            const repo = (_c = (_b = github.context.payload.repository) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : 'gh-action-fork';
             core.setOutput('payload', `The event payload: ${payload}`);
             core.setOutput('context', github.context);
+            // Get latest release
+            // TODO: make this more robust
+            const latestRelease = yield octokit.rest.repos.getLatestRelease({
+                owner,
+                repo
+            });
+            core.setOutput('latestRelease', latestRelease.data.tag_name);
+            // Get diff between last tag and now
+            // const lastTag = latestRelease.data.tag_name
+            const commits = yield octokit.rest.repos.listCommits({
+                owner,
+                repo
+            });
+            core.setOutput('commits', commits);
         }
         catch (error) {
             if (error instanceof Error)
@@ -60,37 +71,6 @@ function run() {
     });
 }
 run();
-
-
-/***/ }),
-
-/***/ 5817:
-/***/ (function(__unused_webpack_module, exports) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.wait = void 0;
-function wait(milliseconds) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise(resolve => {
-            if (isNaN(milliseconds)) {
-                throw new Error('milliseconds not a number');
-            }
-            setTimeout(() => resolve('done!'), milliseconds);
-        });
-    });
-}
-exports.wait = wait;
 
 
 /***/ }),
@@ -2580,6 +2560,44 @@ exports.paginatingEndpoints = paginatingEndpoints;
 
 /***/ }),
 
+/***/ 8883:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+const VERSION = "1.0.4";
+
+/**
+ * @param octokit Octokit instance
+ * @param options Options passed to Octokit constructor
+ */
+
+function requestLog(octokit) {
+  octokit.hook.wrap("request", (request, options) => {
+    octokit.log.debug("request", options);
+    const start = Date.now();
+    const requestOptions = octokit.request.endpoint.parse(options);
+    const path = requestOptions.url.replace(options.baseUrl, "");
+    return request(options).then(response => {
+      octokit.log.info(`${requestOptions.method} ${path} - ${response.status} in ${Date.now() - start}ms`);
+      return response;
+    }).catch(error => {
+      octokit.log.info(`${requestOptions.method} ${path} - ${error.status} in ${Date.now() - start}ms`);
+      throw error;
+    });
+  });
+}
+requestLog.VERSION = VERSION;
+
+exports.requestLog = requestLog;
+//# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
 /***/ 3044:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -3875,6 +3893,31 @@ const request = withDefaults(endpoint.endpoint, {
 });
 
 exports.request = request;
+//# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
+/***/ 5375:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+var core = __nccwpck_require__(6762);
+var pluginRequestLog = __nccwpck_require__(8883);
+var pluginPaginateRest = __nccwpck_require__(4193);
+var pluginRestEndpointMethods = __nccwpck_require__(3044);
+
+const VERSION = "18.12.0";
+
+const Octokit = core.Octokit.plugin(pluginRequestLog.requestLog, pluginRestEndpointMethods.legacyRestEndpointMethods, pluginPaginateRest.paginateRest).defaults({
+  userAgent: `octokit-rest.js/${VERSION}`
+});
+
+exports.Octokit = Octokit;
 //# sourceMappingURL=index.js.map
 
 

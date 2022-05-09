@@ -26,4 +26,6 @@ jobs:
       - run: echo "${{ steps.result.outputs.time}}" 
       - run: echo "${{ steps.result.outputs.payload}}" 
       - run: echo "${{ steps.result.outputs.context}}" 
-      - run: echo "${{ steps.result.outputs.latestRelease}}" 
+      - run: echo "${{ steps.result.outputs.latestRelease}}"
+      - run: echo "${{ steps.result.outputs.commits}}"
+       
