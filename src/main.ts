@@ -8,8 +8,10 @@ async function run(): Promise<void> {
   try {
     // Get the JSON webhook payload for the event that triggered the workflow
     const payload = JSON.stringify(github.context.payload, undefined, 2)
-    const owner = github.context.payload.owner.name ?? 'manumena'
+    const owner = github.context.payload.repository?.owner.name ?? 'manumena'
     const repo = github.context.payload.repository?.name ?? 'gh-action-fork'
+    // const owner = 'manumena'
+    // const repo = 'gh-action-fork'
 
     core.setOutput('payload', `The event payload: ${payload}`)
     core.setOutput('context', github.context)

@@ -40,13 +40,14 @@ const github = __importStar(__nccwpck_require__(5438));
 const rest_1 = __nccwpck_require__(5375);
 const octokit = new rest_1.Octokit({});
 function run() {
-    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // Get the JSON webhook payload for the event that triggered the workflow
             const payload = JSON.stringify(github.context.payload, undefined, 2);
-            const owner = (_a = github.context.payload.owner.name) !== null && _a !== void 0 ? _a : 'manumena';
-            const repo = (_c = (_b = github.context.payload.repository) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : 'gh-action-fork';
+            // const owner = github.context.payload.owner.name ?? 'manumena'
+            // const repo = github.context.payload.repository?.name ?? 'gh-action-fork'
+            const owner = 'manumena';
+            const repo = 'gh-action-fork';
             core.setOutput('payload', `The event payload: ${payload}`);
             core.setOutput('context', github.context);
             // Get latest release
