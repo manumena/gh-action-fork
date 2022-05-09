@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import * as github from '@actions/github'
 import {wait} from './wait'
 
 async function run(): Promise<void> {
@@ -11,6 +12,11 @@ async function run(): Promise<void> {
     core.debug(new Date().toTimeString())
 
     core.setOutput('time', new Date().toTimeString())
+
+    // Get last release
+    // Get the JSON webhook payload for the event that triggered the workflow
+    const payload = JSON.stringify(github.context.payload, undefined, 2)
+    core.setOutput('payload', `The event payload: ${payload}`)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
