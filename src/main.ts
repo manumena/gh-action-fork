@@ -11,7 +11,7 @@ async function run(): Promise<void> {
     await wait(parseInt(ms, 10))
     core.debug(new Date().toTimeString())
 
-    core.setOutput('time', new Date().toTimeString())
+    // core.setOutput('time', new Date().toTimeString())
 
     // Get last release
     // Get the JSON webhook payload for the event that triggered the workflow
