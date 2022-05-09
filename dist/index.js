@@ -63,7 +63,7 @@ function run() {
                 repo: 'gh-action-fork'
             });
             // core.setOutput('latestRelease', JSON.stringify(latestRelease, undefined, 2))
-            core.setOutput('latestRelease', latestRelease);
+            core.setOutput('latestRelease', latestRelease.data.tag_name);
         }
         catch (error) {
             if (error instanceof Error)
