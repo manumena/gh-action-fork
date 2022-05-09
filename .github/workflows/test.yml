@@ -25,4 +25,4 @@ jobs:
           milliseconds: 1000
       - run: echo "${{ steps.result.outputs.time}}" 
       - run: echo "${{ steps.result.outputs.payload}}" 
-      - run: echo "${{ steps.result.outputs}}" 
+      - run: echo "${{ steps.result.outputs.context}}" 
