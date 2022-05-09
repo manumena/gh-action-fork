@@ -37,7 +37,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
+const rest_1 = __nccwpck_require__(5375);
 const wait_1 = __nccwpck_require__(5817);
+const octokit = new rest_1.Octokit({});
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -47,11 +49,20 @@ function run() {
             yield (0, wait_1.wait)(parseInt(ms, 10));
             core.debug(new Date().toTimeString());
             // core.setOutput('time', new Date().toTimeString())
-            // Get last release
             // Get the JSON webhook payload for the event that triggered the workflow
             const payload = JSON.stringify(github.context.payload, undefined, 2);
             core.setOutput('payload', `The event payload: ${payload}`);
             core.setOutput('context', github.context);
+            // Get latest release
+            // const latestRelease = octokit.rest.repos.getLatestRelease({
+            //   payload.owner.name,
+            //   payload.repository.name,
+            // })
+            const latestRelease = octokit.rest.repos.getLatestRelease({
+                owner: 'manumena',
+                repo: 'gh-action-fork'
+            });
+            core.setOutput('latestRelease', JSON.stringify(latestRelease, undefined, 2));
         }
         catch (error) {
             if (error instanceof Error)
@@ -2580,6 +2591,44 @@ exports.paginatingEndpoints = paginatingEndpoints;
 
 /***/ }),
 
+/***/ 8883:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+const VERSION = "1.0.4";
+
+/**
+ * @param octokit Octokit instance
+ * @param options Options passed to Octokit constructor
+ */
+
+function requestLog(octokit) {
+  octokit.hook.wrap("request", (request, options) => {
+    octokit.log.debug("request", options);
+    const start = Date.now();
+    const requestOptions = octokit.request.endpoint.parse(options);
+    const path = requestOptions.url.replace(options.baseUrl, "");
+    return request(options).then(response => {
+      octokit.log.info(`${requestOptions.method} ${path} - ${response.status} in ${Date.now() - start}ms`);
+      return response;
+    }).catch(error => {
+      octokit.log.info(`${requestOptions.method} ${path} - ${error.status} in ${Date.now() - start}ms`);
+      throw error;
+    });
+  });
+}
+requestLog.VERSION = VERSION;
+
+exports.requestLog = requestLog;
+//# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
 /***/ 3044:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -3875,6 +3924,31 @@ const request = withDefaults(endpoint.endpoint, {
 });
 
 exports.request = request;
+//# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
+/***/ 5375:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+var core = __nccwpck_require__(6762);
+var pluginRequestLog = __nccwpck_require__(8883);
+var pluginPaginateRest = __nccwpck_require__(4193);
+var pluginRestEndpointMethods = __nccwpck_require__(3044);
+
+const VERSION = "18.12.0";
+
+const Octokit = core.Octokit.plugin(pluginRequestLog.requestLog, pluginRestEndpointMethods.legacyRestEndpointMethods, pluginPaginateRest.paginateRest).defaults({
+  userAgent: `octokit-rest.js/${VERSION}`
+});
+
+exports.Octokit = Octokit;
 //# sourceMappingURL=index.js.map
 
 
