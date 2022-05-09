@@ -27,7 +27,7 @@ async function run(): Promise<void> {
     //   payload.repository.name,
     // })
 
-    const latestRelease = octokit.rest.repos.getLatestRelease({
+    const latestRelease = await octokit.rest.repos.getLatestRelease({
       owner: 'manumena',
       repo: 'gh-action-fork'
     })
