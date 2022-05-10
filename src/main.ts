@@ -30,8 +30,12 @@ async function run(): Promise<void> {
       base: lastTag,
       head: 'HEAD'
     })
-    const commits = commitsData.data.commits[0]
-    core.setOutput('commits', commits)
+
+    // Extract messages
+    const commitsMessages = commitsData.data.commits.map(
+      commit => commit.commit.message
+    )
+    core.setOutput('commits', commitsMessages)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
