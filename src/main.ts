@@ -10,10 +10,8 @@ async function run(): Promise<void> {
     const payload = JSON.stringify(github.context.payload, undefined, 2)
     const owner = github.context.payload.repository?.owner.name ?? 'manumena'
     const repo = github.context.payload.repository?.name ?? 'gh-action-fork'
-    // const owner = 'manumena'
-    // const repo = 'gh-action-fork'
 
-    core.setOutput('payload', `The event payload: ${payload}`)
+    core.setOutput('payload', `The event payload: ${payload}`)  
     core.setOutput('context', github.context)
 
     // Get latest release
@@ -25,11 +23,14 @@ async function run(): Promise<void> {
     core.setOutput('latestRelease', latestRelease.data.tag_name)
 
     // Get diff between last tag and now
-    // const lastTag = latestRelease.data.tag_name
-    const commits = await octokit.rest.repos.listCommits({
+    const lastTag = latestRelease.data.tag_name
+    const commitsData = await octokit.rest.repos.compareCommits({
       owner,
-      repo
+      repo,
+      base: lastTag,
+      head: 'HEAD'
     })
+    const commits = commitsData.data.commits[0]
     core.setOutput('commits', commits)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)

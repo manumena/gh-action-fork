@@ -40,14 +40,13 @@ const github = __importStar(__nccwpck_require__(5438));
 const rest_1 = __nccwpck_require__(5375);
 const octokit = new rest_1.Octokit({});
 function run() {
+    var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // Get the JSON webhook payload for the event that triggered the workflow
             const payload = JSON.stringify(github.context.payload, undefined, 2);
-            // const owner = github.context.payload.owner.name ?? 'manumena'
-            // const repo = github.context.payload.repository?.name ?? 'gh-action-fork'
-            const owner = 'manumena';
-            const repo = 'gh-action-fork';
+            const owner = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner.name) !== null && _b !== void 0 ? _b : 'manumena';
+            const repo = (_d = (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name) !== null && _d !== void 0 ? _d : 'gh-action-fork';
             core.setOutput('payload', `The event payload: ${payload}`);
             core.setOutput('context', github.context);
             // Get latest release
@@ -58,11 +57,14 @@ function run() {
             });
             core.setOutput('latestRelease', latestRelease.data.tag_name);
             // Get diff between last tag and now
-            // const lastTag = latestRelease.data.tag_name
-            const commits = yield octokit.rest.repos.listCommits({
+            const lastTag = latestRelease.data.tag_name;
+            const commitsData = yield octokit.rest.repos.compareCommits({
                 owner,
-                repo
+                repo,
+                base: lastTag,
+                head: 'HEAD'
             });
+            const commits = commitsData.data.commits[0];
             core.setOutput('commits', commits);
         }
         catch (error) {
