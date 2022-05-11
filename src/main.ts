@@ -1,14 +1,15 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {Octokit} from '@octokit/rest'
-import {createActionAuth} from '@octokit/auth-action'
+// import {createActionAuth} from '@octokit/auth-action'
 
 async function run(): Promise<void> {
-  const auth = createActionAuth()
-  const authentication = await auth()
+  const token = core.getInput('GITHUB_TOKEN')
+  // const auth = createActionAuth()
+  // const authentication = await auth()
 
   const octokit = new Octokit({
-    authStrategy: authentication
+    authStrategy: token
   })
 
   try {
