@@ -31,7 +31,7 @@ jobs:
       - run: echo "${{ steps.result.outputs.commits}}"
       - run: echo "${{ steps.result.outputs.bumpMajor}}"
       - run: echo "${{ steps.result.outputs.bumpMinor}}"
-      - run: echo "${{ steps.result.outputs.bumPatch}}"
+      - run: echo "${{ steps.result.outputs.bumpPatch}}"
       - run: echo "${{ steps.result.outputs.newTag}}"
       - run: echo "${{ steps.result.outputs.releaseResponse}}"
        
