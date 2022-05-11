@@ -38,14 +38,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const rest_1 = __nccwpck_require__(5375);
-const auth_action_1 = __nccwpck_require__(20);
+// import {createActionAuth} from '@octokit/auth-action'
 function run() {
     var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
-        const auth = (0, auth_action_1.createActionAuth)();
-        const authentication = yield auth();
+        const token = core.getInput('GITHUB_TOKEN');
+        // const auth = createActionAuth()
+        // const authentication = await auth()
         const octokit = new rest_1.Octokit({
-            authStrategy: authentication
+            auth: token
         });
         try {
             // Get the JSON webhook payload for the event that triggered the workflow
@@ -1616,41 +1617,6 @@ function checkBypass(reqUrl) {
     return false;
 }
 exports.checkBypass = checkBypass;
-
-
-/***/ }),
-
-/***/ 20:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-var authToken = __nccwpck_require__(334);
-
-const createActionAuth = function createActionAuth() {
-  if (!process.env.GITHUB_ACTION) {
-    throw new Error("[@octokit/auth-action] `GITHUB_ACTION` environment variable is not set. @octokit/auth-action is meant to be used in GitHub Actions only.");
-  }
-
-  const definitions = [process.env.GITHUB_TOKEN, process.env.INPUT_GITHUB_TOKEN, process.env.INPUT_TOKEN].filter(Boolean);
-
-  if (definitions.length === 0) {
-    throw new Error("[@octokit/auth-action] `GITHUB_TOKEN` variable is not set. It must be set on either `env:` or `with:`. See https://github.com/octokit/auth-action.js#createactionauth");
-  }
-
-  if (definitions.length > 1) {
-    throw new Error("[@octokit/auth-action] The token variable is specified more than once. Use either `with.token`, `with.GITHUB_TOKEN`, or `env.GITHUB_TOKEN`. See https://github.com/octokit/auth-action.js#createactionauth");
-  }
-
-  const token = definitions.pop();
-  return authToken.createTokenAuth(token);
-};
-
-exports.createActionAuth = createActionAuth;
-//# sourceMappingURL=index.js.map
 
 
 /***/ }),
