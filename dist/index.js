@@ -100,11 +100,11 @@ function run() {
             if (match) {
                 if (bumpMajor) {
                     const bump = (parseInt(match[1]) + 1).toString();
-                    newTag = lastTag.replace(semverRegex, `${bump}.$2.$3`);
+                    newTag = lastTag.replace(semverRegex, `${bump}.0.0`);
                 }
                 else if (bumpMinor) {
                     const bump = (parseInt(match[2]) + 1).toString();
-                    newTag = lastTag.replace(semverRegex, `$1.${bump}.$3`);
+                    newTag = lastTag.replace(semverRegex, `$1.${bump}.0`);
                 }
                 else if (bumpPatch) {
                     const bump = (parseInt(match[3]) + 1).toString();
