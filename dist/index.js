@@ -45,7 +45,7 @@ function run() {
         const auth = (0, auth_action_1.createActionAuth)();
         const authentication = yield auth();
         const octokit = new rest_1.Octokit({
-            auth: authentication
+            authStrategy: authentication
         });
         try {
             // Get the JSON webhook payload for the event that triggered the workflow

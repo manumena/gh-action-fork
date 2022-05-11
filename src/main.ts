@@ -8,7 +8,7 @@ async function run(): Promise<void> {
   const authentication = await auth()
 
   const octokit = new Octokit({
-    auth: authentication
+    authStrategy: authentication
   })
 
   try {
