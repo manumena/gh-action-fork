@@ -88,7 +88,7 @@ async function run(): Promise<void> {
       tag_name: newTag,
       generate_release_notes: true
     })
-    core.setOutput('releaseResponse', response)
+    core.setOutput('releaseResponse', JSON.stringify(response))
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
