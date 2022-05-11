@@ -1,10 +1,16 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {Octokit} from '@octokit/rest'
-
-const octokit = new Octokit({})
+import {createActionAuth} from '@octokit/auth-action'
 
 async function run(): Promise<void> {
+  const auth = createActionAuth()
+  const authentication = await auth()
+
+  const octokit = new Octokit({
+    auth: authentication
+  })
+
   try {
     // Get the JSON webhook payload for the event that triggered the workflow
     const payload = JSON.stringify(github.context.payload, undefined, 2)
@@ -24,8 +30,9 @@ async function run(): Promise<void> {
     // TODO: fail if tag is not semver
 
     // Get diff between last tag and now
+    // TODO: pagination
     const lastTag = latestRelease.data.tag_name
-    const commitsData = await octokit.rest.repos.compareCommits({
+    const commits = await octokit.rest.repos.compareCommits({
       owner,
       repo,
       base: lastTag,
@@ -33,12 +40,12 @@ async function run(): Promise<void> {
     })
 
     // Extract messages
-    const commitsMessages = commitsData.data.commits.map(
+    const commitsMessages = commits.data.commits.map(
       commit => commit.commit.message
     )
-    // core.setOutput('commits', commitsMessages)
+    core.setOutput('commits', commitsMessages)
 
-    // Bump version depending on commit messages
+    // Decide what to bump depending on commit messages
     let bumpPatch = false
     let bumpMinor = false
     let bumpMajor = false
@@ -51,7 +58,11 @@ async function run(): Promise<void> {
         bumpMajor = true
       }
     }
+    core.setOutput('bumpMajor', bumpMajor)
+    core.setOutput('bumpMinor', bumpMinor)
+    core.setOutput('bumpPatch', bumpPatch)
 
+    // Bump the version
     const semverRegex = new RegExp('^([0-9]+).([0-9]+).([0-9]+)$', 'g')
     const match = semverRegex.exec(lastTag)
     let newTag = ''
@@ -68,6 +79,15 @@ async function run(): Promise<void> {
       }
     }
     core.setOutput('newTag', newTag)
+
+    // Create a release
+    const response = octokit.rest.repos.createRelease({
+      owner,
+      repo,
+      tag_name: newTag,
+      generate_release_notes: true
+    })
+    core.setOutput('releaseResponse', response)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }

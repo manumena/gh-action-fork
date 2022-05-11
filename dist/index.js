@@ -38,10 +38,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const rest_1 = __nccwpck_require__(5375);
-const octokit = new rest_1.Octokit({});
+const auth_action_1 = __nccwpck_require__(20);
 function run() {
     var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
+        const auth = (0, auth_action_1.createActionAuth)();
+        const authentication = yield auth();
+        const octokit = new rest_1.Octokit({
+            auth: authentication
+        });
         try {
             // Get the JSON webhook payload for the event that triggered the workflow
             const payload = JSON.stringify(github.context.payload, undefined, 2);
@@ -58,17 +63,18 @@ function run() {
             core.setOutput('latestRelease', latestRelease.data.tag_name);
             // TODO: fail if tag is not semver
             // Get diff between last tag and now
-            let lastTag = latestRelease.data.tag_name;
-            const commitsData = yield octokit.rest.repos.compareCommits({
+            // TODO: pagination
+            const lastTag = latestRelease.data.tag_name;
+            const commits = yield octokit.rest.repos.compareCommits({
                 owner,
                 repo,
                 base: lastTag,
                 head: 'HEAD'
             });
             // Extract messages
-            const commitsMessages = commitsData.data.commits.map(commit => commit.commit.message);
-            // core.setOutput('commits', commitsMessages)
-            // Bump version depending on commit messages
+            const commitsMessages = commits.data.commits.map(commit => commit.commit.message);
+            core.setOutput('commits', commitsMessages);
+            // Decide what to bump depending on commit messages
             let bumpPatch = false;
             let bumpMinor = false;
             let bumpMajor = false;
@@ -83,6 +89,10 @@ function run() {
                     bumpMajor = true;
                 }
             }
+            core.setOutput('bumpMajor', bumpMajor);
+            core.setOutput('bumpMinor', bumpMinor);
+            core.setOutput('bumpPatch', bumpPatch);
+            // Bump the version
             const semverRegex = new RegExp('^([0-9]+).([0-9]+).([0-9]+)$', 'g');
             const match = semverRegex.exec(lastTag);
             let newTag = '';
@@ -101,6 +111,14 @@ function run() {
                 }
             }
             core.setOutput('newTag', newTag);
+            // Create a release
+            const response = octokit.rest.repos.createRelease({
+                owner,
+                repo,
+                tag_name: newTag,
+                generate_release_notes: true
+            });
+            core.setOutput('releaseResponse', response);
         }
         catch (error) {
             if (error instanceof Error)
@@ -1598,6 +1616,41 @@ function checkBypass(reqUrl) {
     return false;
 }
 exports.checkBypass = checkBypass;
+
+
+/***/ }),
+
+/***/ 20:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+var authToken = __nccwpck_require__(334);
+
+const createActionAuth = function createActionAuth() {
+  if (!process.env.GITHUB_ACTION) {
+    throw new Error("[@octokit/auth-action] `GITHUB_ACTION` environment variable is not set. @octokit/auth-action is meant to be used in GitHub Actions only.");
+  }
+
+  const definitions = [process.env.GITHUB_TOKEN, process.env.INPUT_GITHUB_TOKEN, process.env.INPUT_TOKEN].filter(Boolean);
+
+  if (definitions.length === 0) {
+    throw new Error("[@octokit/auth-action] `GITHUB_TOKEN` variable is not set. It must be set on either `env:` or `with:`. See https://github.com/octokit/auth-action.js#createactionauth");
+  }
+
+  if (definitions.length > 1) {
+    throw new Error("[@octokit/auth-action] The token variable is specified more than once. Use either `with.token`, `with.GITHUB_TOKEN`, or `env.GITHUB_TOKEN`. See https://github.com/octokit/auth-action.js#createactionauth");
+  }
+
+  const token = definitions.pop();
+  return authToken.createTokenAuth(token);
+};
+
+exports.createActionAuth = createActionAuth;
+//# sourceMappingURL=index.js.map
 
 
 /***/ }),
