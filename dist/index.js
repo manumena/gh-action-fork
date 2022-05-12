@@ -77,15 +77,14 @@ function run() {
             const commits = yield octokit.paginate(octokit.rest.repos.compareCommits, {
                 owner,
                 repo,
-                base: 'ec715535ddf2b1d99838f4ca3b897b9431d466e1',
+                base: lastTag,
                 head: 'HEAD',
-                per_page: 30
-            }, (response) => response.data.commits);
-            core.setOutput('commits', commits);
+                per_page: 100
+            }, response => response.data.commits);
             // Extract messages
             const commitsMessages = commits.map(commit => commit.commit.message);
-            core.setOutput('commitsLength', commits.length);
             core.setOutput('commits', commitsMessages);
+            core.setOutput('commitsLength', commitsMessages.length);
             // // Decide what to bump depending on commit messages
             // let bumpPatch = false
             // let bumpMinor = false

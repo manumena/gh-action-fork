@@ -43,14 +43,17 @@ async function run(): Promise<void> {
 
     // Get commits between last tag and now
     // TODO: pagination
-    const commits = await octokit.paginate(octokit.rest.repos.compareCommits, {
-      owner,
-      repo,
-      base: lastTag,
-      head: 'HEAD',
-      per_page: 100
-    },
-    (response) => response.data.commits)
+    const commits = await octokit.paginate(
+      octokit.rest.repos.compareCommits,
+      {
+        owner,
+        repo,
+        base: lastTag,
+        head: 'HEAD',
+        per_page: 100
+      },
+      response => response.data.commits
+    )
 
     // Extract messages
     const commitsMessages = commits.map(commit => commit.commit.message)
