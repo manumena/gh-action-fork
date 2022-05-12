@@ -1,23 +1,28 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {Octokit} from '@octokit/rest'
-// import {createActionAuth} from '@octokit/auth-action'
 
 async function run(): Promise<void> {
-  const token = core.getInput('GITHUB_TOKEN')
-  // const auth = createActionAuth()
-  // const authentication = await auth()
+  // const token = core.getInput('GITHUB_TOKEN')
 
   const octokit = new Octokit({
-    auth: token
+    // auth: token
   })
 
   try {
     // Get the JSON webhook payload for the event that triggered the workflow
     const payload = JSON.stringify(github.context.payload, undefined, 2)
-    const owner = github.context.payload.repository?.owner.name ?? 'manumena'
-    const repo = github.context.payload.repository?.name ?? 'gh-action-fork'
-    // TODO: fail if owner or repo are not filled properly
+    // const owner = github.context.payload.repository?.owner.name ?? ''
+    const owner = ''
+    const repo = github.context.payload.repository?.name ?? ''
+
+    // Fail if owner or repo are not filled properly
+    if (owner === '') {
+      core.setFailed('Owner retrieved from payload is not valid')
+    }
+    if (repo === '') {
+      core.setFailed('Repo retrieved from payload is not valid')
+    }
 
     core.setOutput('payload', `The event payload: ${payload}`)
     core.setOutput('context', github.context)
