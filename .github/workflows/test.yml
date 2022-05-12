@@ -24,11 +24,11 @@ jobs:
         id: result
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo "Github context: ${{ steps.result.outputs.context}}"
-      - run: echo "Last tag: ${{ steps.result.outputs.lastTag}}"
-      - run: echo "Commits found: ${{ steps.result.outputs.commits}}"
-      - run: echo "Major being bumped: ${{ steps.result.outputs.bumpMajor}}"
-      - run: echo "Minor being bumped: ${{ steps.result.outputs.bumpMinor}}"
-      - run: echo "Patch being bumped: ${{ steps.result.outputs.bumpPatch}}"
+      - run: echo "Github context ${{ steps.result.outputs.context}}"
+      - run: echo "Last tag ${{ steps.result.outputs.lastTag}}"
+      - run: echo "Commits found ${{ steps.result.outputs.commits}}"
+      - run: echo "Major being bumped ${{ steps.result.outputs.bumpMajor}}"
+      - run: echo "Minor being bumped ${{ steps.result.outputs.bumpMinor}}"
+      - run: echo "Patch being bumped ${{ steps.result.outputs.bumpPatch}}"
       - run: echo "New tag: ${{ steps.result.outputs.newTag}}"
        
