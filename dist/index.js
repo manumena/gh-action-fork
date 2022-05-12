@@ -39,7 +39,6 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const rest_1 = __nccwpck_require__(5375);
 function run() {
-    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         // const token = core.getInput('GITHUB_TOKEN')
         const octokit = new rest_1.Octokit({
@@ -49,14 +48,15 @@ function run() {
             // Get the JSON webhook payload for the event that triggered the workflow
             const payload = JSON.stringify(github.context.payload, undefined, 2);
             // const owner = github.context.payload.repository?.owner.name ?? ''
+            // const repo = github.context.payload.repository?.name ?? ''
             const owner = '';
-            const repo = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.name) !== null && _b !== void 0 ? _b : '';
+            const repo = '';
             // Fail if owner or repo are not filled properly
             if (owner === '') {
-                core.setFailed('Owner retrieved from payload is not valid');
+                throw new Error('Owner retrieved from payload is not valid');
             }
             if (repo === '') {
-                core.setFailed('Repo retrieved from payload is not valid');
+                throw new Error('Repo retrieved from payload is not valid');
             }
             core.setOutput('payload', `The event payload: ${payload}`);
             core.setOutput('context', github.context);
