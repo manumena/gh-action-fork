@@ -24,7 +24,6 @@ jobs:
         id: result
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo "${{ steps.result.outputs.time}}" 
       - run: echo "${{ steps.result.outputs.payload}}" 
       - run: echo "${{ steps.result.outputs.context}}" 
       - run: echo "${{ steps.result.outputs.latestRelease}}"
