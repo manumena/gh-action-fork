@@ -39,7 +39,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const rest_1 = __nccwpck_require__(5375);
 function run() {
-    var _a, _b;
+    var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
         // const token = core.getInput('GITHUB_TOKEN')
         const octokit = new rest_1.Octokit({
@@ -49,8 +49,7 @@ function run() {
             // Get the JSON webhook payload for the event that triggered the workflow
             const payload = JSON.stringify(github.context.payload, undefined, 2);
             const owner = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner.name) !== null && _b !== void 0 ? _b : '';
-            // const repo = github.context.payload.repository?.name ?? ''
-            const repo = '';
+            const repo = (_d = (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name) !== null && _d !== void 0 ? _d : '';
             // Fail if owner or repo are not filled properly
             if (owner === '') {
                 throw new Error('Owner retrieved from payload is not valid');
@@ -65,11 +64,14 @@ function run() {
                 owner,
                 repo
             });
-            core.setOutput('latestRelease', latestRelease.data.tag_name);
-            // TODO: fail if tag is not semver
+            const lastTag = latestRelease.data.tag_name;
+            core.setOutput('lastTag', lastTag);
+            // Fail if tag is not semver
+            if (lastTag.match('^([0-9]+).([0-9]+).([0-9]+)$')) {
+                throw new Error(`Last tag is not semver. Found: ${lastTag}`);
+            }
             // Get diff between last tag and now
             // TODO: pagination
-            const lastTag = latestRelease.data.tag_name;
             const commits = yield octokit.rest.repos.compareCommits({
                 owner,
                 repo,

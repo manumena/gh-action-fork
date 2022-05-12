@@ -13,8 +13,7 @@ async function run(): Promise<void> {
     // Get the JSON webhook payload for the event that triggered the workflow
     const payload = JSON.stringify(github.context.payload, undefined, 2)
     const owner = github.context.payload.repository?.owner.name ?? ''
-    // const repo = github.context.payload.repository?.name ?? ''
-    const repo = ''
+    const repo = github.context.payload.repository?.name ?? ''
 
     // Fail if owner or repo are not filled properly
     if (owner === '') {
@@ -32,12 +31,15 @@ async function run(): Promise<void> {
       owner,
       repo
     })
-    core.setOutput('latestRelease', latestRelease.data.tag_name)
-    // TODO: fail if tag is not semver
+    const lastTag = latestRelease.data.tag_name
+    core.setOutput('lastTag', lastTag)
 
+    // Fail if tag is not semver
+    if (lastTag.match('^([0-9]+).([0-9]+).([0-9]+)$')) {
+      throw new Error(`Last tag is not semver. Found: ${lastTag}`)
+    }
     // Get diff between last tag and now
     // TODO: pagination
-    const lastTag = latestRelease.data.tag_name
     const commits = await octokit.rest.repos.compareCommits({
       owner,
       repo,
