@@ -49,7 +49,6 @@ function run() {
         });
         try {
             // Get the JSON webhook payload for the event that triggered the workflow
-            const payload = JSON.stringify(github.context.payload, undefined, 2);
             const owner = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner.name) !== null && _b !== void 0 ? _b : 'manumena';
             const repo = (_d = (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name) !== null && _d !== void 0 ? _d : 'gh-action-fork';
             // Fail if owner or repo are not filled properly
@@ -59,7 +58,6 @@ function run() {
             if (repo === '') {
                 throw new Error('Repo retrieved from payload is not valid');
             }
-            core.setOutput('payload', `The event payload: ${payload}`);
             core.setOutput('context', github.context);
             // Get latest release
             const latestRelease = yield octokit.rest.repos.getLatestRelease({
@@ -70,7 +68,7 @@ function run() {
             core.setOutput('lastTag', lastTag);
             // Fail if tag is not semver
             if (!lastTag.match('^([0-9]+).([0-9]+).([0-9]+)$')) {
-                throw new Error(`Last release tag name is not semver. Found: ${lastTag}`);
+                throw new Error(`Latest release tag name is not semver. Found: ${lastTag}`);
             }
             // Get commits between last tag and now
             const commits = yield octokit.paginate(octokit.rest.repos.compareCommits, {
@@ -122,13 +120,12 @@ function run() {
             }
             core.setOutput('newTag', newTag);
             // Create a release
-            const response = octokit.rest.repos.createRelease({
+            octokit.rest.repos.createRelease({
                 owner,
                 repo,
                 tag_name: newTag,
                 generate_release_notes: true
             });
-            core.setOutput('releaseResponse', JSON.stringify(response));
         }
         catch (error) {
             if (error instanceof Error)

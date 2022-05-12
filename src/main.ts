@@ -13,7 +13,6 @@ async function run(): Promise<void> {
 
   try {
     // Get the JSON webhook payload for the event that triggered the workflow
-    const payload = JSON.stringify(github.context.payload, undefined, 2)
     const owner = github.context.payload.repository?.owner.name ?? 'manumena'
     const repo = github.context.payload.repository?.name ?? 'gh-action-fork'
 
@@ -25,7 +24,6 @@ async function run(): Promise<void> {
       throw new Error('Repo retrieved from payload is not valid')
     }
 
-    core.setOutput('payload', `The event payload: ${payload}`)
     core.setOutput('context', github.context)
 
     // Get latest release
@@ -38,7 +36,7 @@ async function run(): Promise<void> {
 
     // Fail if tag is not semver
     if (!lastTag.match('^([0-9]+).([0-9]+).([0-9]+)$')) {
-      throw new Error(`Last release tag name is not semver. Found: ${lastTag}`)
+      throw new Error(`Latest release tag name is not semver. Found: ${lastTag}`)
     }
 
     // Get commits between last tag and now
@@ -95,13 +93,12 @@ async function run(): Promise<void> {
     core.setOutput('newTag', newTag)
 
     // Create a release
-    const response = octokit.rest.repos.createRelease({
+    octokit.rest.repos.createRelease({
       owner,
       repo,
       tag_name: newTag,
       generate_release_notes: true
     })
-    core.setOutput('releaseResponse', JSON.stringify(response))
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
