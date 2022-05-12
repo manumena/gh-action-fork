@@ -39,7 +39,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const rest_1 = __nccwpck_require__(5375);
 function run() {
-    var _a, _b, _c, _d;
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         // const token = core.getInput('GITHUB_TOKEN')
         const octokit = new rest_1.Octokit({
@@ -48,79 +48,82 @@ function run() {
         try {
             // Get the JSON webhook payload for the event that triggered the workflow
             const payload = JSON.stringify(github.context.payload, undefined, 2);
-            const owner = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner.name) !== null && _b !== void 0 ? _b : '';
-            const repo = (_d = (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name) !== null && _d !== void 0 ? _d : '';
+            // const owner = github.context.payload.repository?.owner.name ?? ''
+            const owner = '';
+            const repo = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.name) !== null && _b !== void 0 ? _b : '';
             // Fail if owner or repo are not filled properly
             if (owner === '') {
-                core.debug('Owner retrieved from payload is not valid');
+                core.setFailed('Owner retrieved from payload is not valid');
             }
-            // if (repo === '') {
-            //   core.setFailed('Repo retrieved from payload is not valid')
-            // }
-            // core.setOutput('payload', `The event payload: ${payload}`)
-            // core.setOutput('context', github.context)
-            // // Get latest release
-            // const latestRelease = await octokit.rest.repos.getLatestRelease({
-            //   owner,
-            //   repo
-            // })
-            // core.setOutput('latestRelease', latestRelease.data.tag_name)
-            // // TODO: fail if tag is not semver
-            // // Get diff between last tag and now
-            // // TODO: pagination
-            // const lastTag = latestRelease.data.tag_name
-            // const commits = await octokit.rest.repos.compareCommits({
-            //   owner,
-            //   repo,
-            //   base: lastTag,
-            //   head: 'HEAD'
-            // })
-            // // Extract messages
-            // const commitsMessages = commits.data.commits.map(
-            //   commit => commit.commit.message
-            // )
-            // core.setOutput('commits', commitsMessages)
-            // // Decide what to bump depending on commit messages
-            // let bumpPatch = false
-            // let bumpMinor = false
-            // let bumpMajor = false
-            // for (const message of commitsMessages) {
-            //   if (message.match('^(chore|docs|fix|refactor|revert|style|test): .+$')) {
-            //     bumpPatch = true
-            //   } else if (message.match('^feat: .+$')) {
-            //     bumpMinor = true
-            //   } else if (message.match('^break: .+$')) {
-            //     bumpMajor = true
-            //   }
-            // }
-            // core.setOutput('bumpMajor', bumpMajor)
-            // core.setOutput('bumpMinor', bumpMinor)
-            // core.setOutput('bumpPatch', bumpPatch)
-            // // Bump the version
-            // const semverRegex = new RegExp('^([0-9]+).([0-9]+).([0-9]+)$', 'g')
-            // const match = semverRegex.exec(lastTag)
-            // let newTag = ''
-            // if (match) {
-            //   if (bumpMajor) {
-            //     const bump = (parseInt(match[1]) + 1).toString()
-            //     newTag = lastTag.replace(semverRegex, `${bump}.0.0`)
-            //   } else if (bumpMinor) {
-            //     const bump = (parseInt(match[2]) + 1).toString()
-            //     newTag = lastTag.replace(semverRegex, `$1.${bump}.0`)
-            //   } else if (bumpPatch) {
-            //     const bump = (parseInt(match[3]) + 1).toString()
-            //     newTag = lastTag.replace(semverRegex, `$1.$2.${bump}`)
-            //   }
-            // }
-            // core.setOutput('newTag', newTag)
+            if (repo === '') {
+                core.setFailed('Repo retrieved from payload is not valid');
+            }
+            core.setOutput('payload', `The event payload: ${payload}`);
+            core.setOutput('context', github.context);
+            // Get latest release
+            const latestRelease = yield octokit.rest.repos.getLatestRelease({
+                owner,
+                repo
+            });
+            core.setOutput('latestRelease', latestRelease.data.tag_name);
+            // TODO: fail if tag is not semver
+            // Get diff between last tag and now
+            // TODO: pagination
+            const lastTag = latestRelease.data.tag_name;
+            const commits = yield octokit.rest.repos.compareCommits({
+                owner,
+                repo,
+                base: lastTag,
+                head: 'HEAD'
+            });
+            // Extract messages
+            const commitsMessages = commits.data.commits.map(commit => commit.commit.message);
+            core.setOutput('commits', commitsMessages);
+            // Decide what to bump depending on commit messages
+            let bumpPatch = false;
+            let bumpMinor = false;
+            let bumpMajor = false;
+            for (const message of commitsMessages) {
+                if (message.match('^(chore|docs|fix|refactor|revert|style|test): .+$')) {
+                    bumpPatch = true;
+                }
+                else if (message.match('^feat: .+$')) {
+                    bumpMinor = true;
+                }
+                else if (message.match('^break: .+$')) {
+                    bumpMajor = true;
+                }
+            }
+            core.setOutput('bumpMajor', bumpMajor);
+            core.setOutput('bumpMinor', bumpMinor);
+            core.setOutput('bumpPatch', bumpPatch);
+            // Bump the version
+            const semverRegex = new RegExp('^([0-9]+).([0-9]+).([0-9]+)$', 'g');
+            const match = semverRegex.exec(lastTag);
+            let newTag = '';
+            if (match) {
+                if (bumpMajor) {
+                    const bump = (parseInt(match[1]) + 1).toString();
+                    newTag = lastTag.replace(semverRegex, `${bump}.0.0`);
+                }
+                else if (bumpMinor) {
+                    const bump = (parseInt(match[2]) + 1).toString();
+                    newTag = lastTag.replace(semverRegex, `$1.${bump}.0`);
+                }
+                else if (bumpPatch) {
+                    const bump = (parseInt(match[3]) + 1).toString();
+                    newTag = lastTag.replace(semverRegex, `$1.$2.${bump}`);
+                }
+            }
+            core.setOutput('newTag', newTag);
             // Create a release
-            // const response = octokit.rest.repos.createRelease({
-            //   owner,
-            //   repo,
-            //   tag_name: newTag,
-            //   generate_release_notes: true
-            // })
-            // core.setOutput('releaseResponse', JSON.stringify(response))
+            const response = octokit.rest.repos.createRelease({
+                owner,
+                repo,
+                tag_name: newTag,
+                generate_release_notes: true
+            });
+            core.setOutput('releaseResponse', JSON.stringify(response));
         }
         catch (error) {
             if (error instanceof Error)
