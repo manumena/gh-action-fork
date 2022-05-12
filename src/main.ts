@@ -4,11 +4,11 @@ import {Octokit} from '@octokit/rest'
 import {paginateRest} from '@octokit/plugin-paginate-rest'
 
 async function run(): Promise<void> {
-  // const token = core.getInput('GITHUB_TOKEN')
+  const token = core.getInput('GITHUB_TOKEN')
 
   const PluginOctokit = Octokit.plugin(paginateRest)
   const octokit = new PluginOctokit({
-    // auth: token
+    auth: token
   })
 
   try {
@@ -42,7 +42,6 @@ async function run(): Promise<void> {
     }
 
     // Get commits between last tag and now
-    // TODO: pagination
     const commits = await octokit.paginate(
       octokit.rest.repos.compareCommits,
       {
@@ -60,49 +59,49 @@ async function run(): Promise<void> {
     core.setOutput('commits', commitsMessages)
     core.setOutput('commitsLength', commitsMessages.length)
 
-    // // Decide what to bump depending on commit messages
-    // let bumpPatch = false
-    // let bumpMinor = false
-    // let bumpMajor = false
-    // for (const message of commitsMessages) {
-    //   if (message.match('^(chore|docs|fix|refactor|revert|style|test): .+$')) {
-    //     bumpPatch = true
-    //   } else if (message.match('^feat: .+$')) {
-    //     bumpMinor = true
-    //   } else if (message.match('^break: .+$')) {
-    //     bumpMajor = true
-    //   }
-    // }
-    // core.setOutput('bumpMajor', bumpMajor)
-    // core.setOutput('bumpMinor', bumpMinor)
-    // core.setOutput('bumpPatch', bumpPatch)
+    // Decide what to bump depending on commit messages
+    let bumpPatch = false
+    let bumpMinor = false
+    let bumpMajor = false
+    for (const message of commitsMessages) {
+      if (message.match('^(chore|docs|fix|refactor|revert|style|test): .+$')) {
+        bumpPatch = true
+      } else if (message.match('^feat: .+$')) {
+        bumpMinor = true
+      } else if (message.match('^break: .+$')) {
+        bumpMajor = true
+      }
+    }
+    core.setOutput('bumpMajor', bumpMajor)
+    core.setOutput('bumpMinor', bumpMinor)
+    core.setOutput('bumpPatch', bumpPatch)
 
-    // // Bump the version
-    // const semverRegex = new RegExp('^([0-9]+).([0-9]+).([0-9]+)$', 'g')
-    // const match = semverRegex.exec(lastTag)
-    // let newTag = ''
-    // if (match) {
-    //   if (bumpMajor) {
-    //     const bump = (parseInt(match[1]) + 1).toString()
-    //     newTag = lastTag.replace(semverRegex, `${bump}.0.0`)
-    //   } else if (bumpMinor) {
-    //     const bump = (parseInt(match[2]) + 1).toString()
-    //     newTag = lastTag.replace(semverRegex, `$1.${bump}.0`)
-    //   } else if (bumpPatch) {
-    //     const bump = (parseInt(match[3]) + 1).toString()
-    //     newTag = lastTag.replace(semverRegex, `$1.$2.${bump}`)
-    //   }
-    // }
-    // core.setOutput('newTag', newTag)
+    // Bump the version
+    const semverRegex = new RegExp('^([0-9]+).([0-9]+).([0-9]+)$', 'g')
+    const match = semverRegex.exec(lastTag)
+    let newTag = ''
+    if (match) {
+      if (bumpMajor) {
+        const bump = (parseInt(match[1]) + 1).toString()
+        newTag = lastTag.replace(semverRegex, `${bump}.0.0`)
+      } else if (bumpMinor) {
+        const bump = (parseInt(match[2]) + 1).toString()
+        newTag = lastTag.replace(semverRegex, `$1.${bump}.0`)
+      } else if (bumpPatch) {
+        const bump = (parseInt(match[3]) + 1).toString()
+        newTag = lastTag.replace(semverRegex, `$1.$2.${bump}`)
+      }
+    }
+    core.setOutput('newTag', newTag)
 
-    // // Create a release
-    // const response = octokit.rest.repos.createRelease({
-    //   owner,
-    //   repo,
-    //   tag_name: newTag,
-    //   generate_release_notes: true
-    // })
-    // core.setOutput('releaseResponse', JSON.stringify(response))
+    // Create a release
+    const response = octokit.rest.repos.createRelease({
+      owner,
+      repo,
+      tag_name: newTag,
+      generate_release_notes: true
+    })
+    core.setOutput('releaseResponse', JSON.stringify(response))
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
