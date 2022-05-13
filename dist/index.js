@@ -39,6 +39,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const rest_1 = __nccwpck_require__(5375);
 const plugin_paginate_rest_1 = __nccwpck_require__(4193);
+const SEMVER_REGEX_STRING = '^([0-9]+).([0-9]+).([0-9]+)$';
 function run() {
     var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
@@ -51,6 +52,7 @@ function run() {
             // Get the JSON webhook payload for the event that triggered the workflow
             const owner = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner.name) !== null && _b !== void 0 ? _b : 'manumena';
             const repo = (_d = (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name) !== null && _d !== void 0 ? _d : 'gh-action-fork';
+            core.setOutput('context', github.context);
             // Fail if owner or repo are not filled properly
             if (owner === '') {
                 throw new Error('Owner retrieved from payload is not valid');
@@ -58,74 +60,14 @@ function run() {
             if (repo === '') {
                 throw new Error('Repo retrieved from payload is not valid');
             }
-            core.setOutput('context', github.context);
-            // Get latest release
-            const latestRelease = yield octokit.rest.repos.getLatestRelease({
-                owner,
-                repo
-            });
-            const lastTag = latestRelease.data.tag_name;
-            core.setOutput('lastTag', lastTag);
-            // Fail if tag is not semver
-            if (!lastTag.match('^([0-9]+).([0-9]+).([0-9]+)$')) {
-                throw new Error(`Latest release tag name is not semver. Found: ${lastTag}`);
-            }
+            // Get last tag
+            const lastTag = yield getLastTag(octokit, owner, repo);
             // Get commits between last tag and now
-            const commits = yield octokit.paginate(octokit.rest.repos.compareCommits, {
-                owner,
-                repo,
-                base: lastTag,
-                head: 'HEAD',
-                per_page: 100
-            }, response => response.data.commits);
-            // Extract messages
-            const commitsMessages = commits.map(commit => commit.commit.message);
-            core.setOutput('commits', commitsMessages);
-            core.setOutput('commitsLength', commitsMessages.length);
-            // Decide what to bump depending on commit messages
-            let bumpPatch = false;
-            let bumpMinor = false;
-            let bumpMajor = false;
-            for (const message of commitsMessages) {
-                if (message.match('^(chore|docs|fix|refactor|revert|style|test): .+$')) {
-                    bumpPatch = true;
-                }
-                else if (message.match('^feat: .+$')) {
-                    bumpMinor = true;
-                }
-                else if (message.match('^break: .+$')) {
-                    bumpMajor = true;
-                }
-            }
-            core.setOutput('bumpMajor', bumpMajor);
-            core.setOutput('bumpMinor', bumpMinor);
-            core.setOutput('bumpPatch', bumpPatch);
-            // Bump the version
-            const semverRegex = new RegExp('^([0-9]+).([0-9]+).([0-9]+)$', 'g');
-            const match = semverRegex.exec(lastTag);
-            let newTag = '';
-            if (match) {
-                if (bumpMajor) {
-                    const bump = (parseInt(match[1]) + 1).toString();
-                    newTag = lastTag.replace(semverRegex, `${bump}.0.0`);
-                }
-                else if (bumpMinor) {
-                    const bump = (parseInt(match[2]) + 1).toString();
-                    newTag = lastTag.replace(semverRegex, `$1.${bump}.0`);
-                }
-                else if (bumpPatch) {
-                    const bump = (parseInt(match[3]) + 1).toString();
-                    newTag = lastTag.replace(semverRegex, `$1.$2.${bump}`);
-                }
-            }
-            core.setOutput('newTag', newTag);
+            const commitsMessages = yield getCommitMessages(octokit, owner, repo, lastTag);
+            // Calculate new tag depending on commit messages
+            const newTag = calculateNewTag(commitsMessages, lastTag);
             // Create a release
-            octokit.rest.repos.createRelease({
-                owner,
-                repo,
-                tag_name: newTag,
-                generate_release_notes: true
-            });
+            createRelease(octokit, owner, repo, newTag);
         }
         catch (error) {
             if (error instanceof Error)
@@ -134,6 +76,90 @@ function run() {
     });
 }
 run();
+function getLastTag(octokit, owner, repo) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Get latest release
+        const latestRelease = yield octokit.rest.repos.getLatestRelease({
+            owner,
+            repo
+        });
+        const lastTag = latestRelease.data.tag_name;
+        core.setOutput('lastTag', lastTag);
+        // Fail if tag is not semver
+        if (!lastTag.match(SEMVER_REGEX_STRING)) {
+            throw new Error(`Latest release tag name is not semver. Found: ${lastTag}`);
+        }
+        return lastTag;
+    });
+}
+function getCommitMessages(octokit, owner, repo, lastTag) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Get commits between last tag and now
+        const commits = yield octokit.paginate(octokit.rest.repos.compareCommits, {
+            owner,
+            repo,
+            base: lastTag,
+            head: 'HEAD',
+            per_page: 100
+        }, response => response.data.commits);
+        // Extract messages
+        const commitsMessages = commits.map(commit => commit.commit.message);
+        core.setOutput('commits', commitsMessages);
+        core.setOutput('commitsLength', commitsMessages.length);
+        return commitsMessages;
+    });
+}
+function calculateNewTag(commitsMessages, lastTag) {
+    // Decide what to bump depending on commit messages
+    let bumpPatch = false;
+    let bumpMinor = false;
+    let bumpMajor = false;
+    for (const message of commitsMessages) {
+        if (message.match('^(chore|docs|fix|refactor|revert|style|test): .+$')) {
+            bumpPatch = true;
+        }
+        else if (message.match('^feat: .+$')) {
+            bumpMinor = true;
+        }
+        else if (message.match('^break: .+$')) {
+            bumpMajor = true;
+        }
+    }
+    core.setOutput('bumpMajor', bumpMajor);
+    core.setOutput('bumpMinor', bumpMinor);
+    core.setOutput('bumpPatch', bumpPatch);
+    // Bump the version
+    const newTag = bumpTag(lastTag, bumpMajor, bumpMinor, bumpPatch);
+    core.setOutput('newTag', newTag);
+    return newTag;
+}
+function bumpTag(lastTag, bumpMajor, bumpMinor, bumpPatch) {
+    const semverRegex = new RegExp(SEMVER_REGEX_STRING, 'g');
+    const match = semverRegex.exec(lastTag);
+    if (match) {
+        if (bumpMajor) {
+            const bump = (parseInt(match[1]) + 1).toString();
+            return lastTag.replace(semverRegex, `${bump}.0.0`);
+        }
+        else if (bumpMinor) {
+            const bump = (parseInt(match[2]) + 1).toString();
+            return lastTag.replace(semverRegex, `$1.${bump}.0`);
+        }
+        else if (bumpPatch) {
+            const bump = (parseInt(match[3]) + 1).toString();
+            return lastTag.replace(semverRegex, `$1.$2.${bump}`);
+        }
+    }
+    return lastTag;
+}
+function createRelease(octokit, owner, repo, newTag) {
+    octokit.rest.repos.createRelease({
+        owner,
+        repo,
+        tag_name: newTag,
+        generate_release_notes: true
+    });
+}
 
 
 /***/ }),
