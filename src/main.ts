@@ -65,12 +65,7 @@ async function getLastTag(
   return lastTag
 }
 
-async function getCommitMessages(
-  octokit: Octokit,
-  owner: string,
-  repo: string,
-  lastTag: string
-): Promise<string[]> {
+async function getCommitMessages(octokit: Octokit, owner: string, repo: string, lastTag: string): Promise<string[]> {
   // Get commits between last tag and now
   const commits = await octokit.paginate(
     octokit.rest.repos.compareCommits,
@@ -134,12 +129,7 @@ function bumpTag(lastTag: string, bumpMajor: boolean, bumpMinor: boolean, bumpPa
   return lastTag
 }
 
-function createRelease(
-  octokit: Octokit,
-  owner: string,
-  repo: string,
-  newTag: string
-): void {
+function createRelease(octokit: Octokit, owner: string, repo: string, newTag: string): void {
   octokit.rest.repos.createRelease({
     owner,
     repo,
