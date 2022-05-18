@@ -15,16 +15,16 @@ async function run(): Promise<void> {
 
   try {
     // Get the JSON webhook payload for the event that triggered the workflow
-    const owner = github.context.payload.repository?.owner.name ?? 'manumena'
-    const repo = github.context.payload.repository?.name ?? 'gh-action-fork'
+    const owner = github.context.payload.repository?.owner.name ?? ''
+    const repo = github.context.payload.repository?.name ?? ''
     core.setOutput('context', github.context)
 
     // Fail if owner or repo are not filled properly
     if (owner === '') {
-      throw new Error('Owner retrieved from payload is not valid')
+      throw new Error(`Owner retrieved from payload is not valid. Context ${github.context}`)
     }
     if (repo === '') {
-      throw new Error('Repo retrieved from payload is not valid')
+      throw new Error(`Repo retrieved from payload is not valid. Context ${github.context}`)
     }
 
     // Get last tag
