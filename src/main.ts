@@ -20,7 +20,7 @@ async function run(): Promise<void> {
     core.setOutput('context', github.context)
 
     // Fail if owner or repo are not filled properly
-    const context = JSON.stringify(github.context)
+    const context = JSON.stringify(github)
     if (owner === '') {
       throw new Error(`Owner retrieved from payload is not valid. Context ${context}`)
     }
