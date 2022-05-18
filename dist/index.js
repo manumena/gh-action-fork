@@ -41,7 +41,7 @@ const rest_1 = __nccwpck_require__(5375);
 const plugin_paginate_rest_1 = __nccwpck_require__(4193);
 const SEMVER_REGEX_STRING = '^([0-9]+).([0-9]+).([0-9]+)$';
 function run() {
-    var _a, _b, _c, _d;
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         const token = core.getInput('GITHUB_TOKEN');
         const PluginOctokit = rest_1.Octokit.plugin(plugin_paginate_rest_1.paginateRest);
@@ -50,15 +50,15 @@ function run() {
         });
         try {
             // Get the JSON webhook payload for the event that triggered the workflow
-            const owner = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner.name) !== null && _b !== void 0 ? _b : 'manumena';
-            const repo = (_d = (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name) !== null && _d !== void 0 ? _d : 'gh-action-fork';
+            const owner = '';
+            const repo = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.name) !== null && _b !== void 0 ? _b : '';
             core.setOutput('context', github.context);
             // Fail if owner or repo are not filled properly
             if (owner === '') {
-                throw new Error('Owner retrieved from payload is not valid');
+                throw new Error(`Owner retrieved from payload is not valid. Context ${github.context}`);
             }
             if (repo === '') {
-                throw new Error('Repo retrieved from payload is not valid');
+                throw new Error(`Repo retrieved from payload is not valid. Context ${github.context}`);
             }
             // Get last tag
             const lastTag = yield getLastTag(octokit, owner, repo);
