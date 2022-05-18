@@ -54,11 +54,12 @@ function run() {
             const repo = (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.name) !== null && _b !== void 0 ? _b : '';
             core.setOutput('context', github.context);
             // Fail if owner or repo are not filled properly
+            const context = JSON.stringify(github.context);
             if (owner === '') {
-                throw new Error(`Owner retrieved from payload is not valid. Context ${github.context}`);
+                throw new Error(`Owner retrieved from payload is not valid. Context ${context}`);
             }
             if (repo === '') {
-                throw new Error(`Repo retrieved from payload is not valid. Context ${github.context}`);
+                throw new Error(`Repo retrieved from payload is not valid. Context ${context}`);
             }
             // Get last tag
             const lastTag = yield getLastTag(octokit, owner, repo);
