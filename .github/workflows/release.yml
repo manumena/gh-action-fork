@@ -20,7 +20,8 @@ jobs:
       - run: echo "REPOSITORY_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $1}')" >> $GITHUB_ENV
         shell: bash
       - run: echo "github env = $GITHUB_ENV"
-      - uses: decentraland/gh-action-release@0.2.2
+      - uses: decentraland/gh-action-release@fix/get-repo
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           dry_run: ${{ github.event.inputs.dry_run }}
+          repository: ${{ github.repository }}
