@@ -7,8 +7,8 @@ on:
         type: boolean
         required: false
         default: false
-  schedule:
-    - cron: '*/5 * * * *'
+  # schedule:
+  #   - cron: '*/5 * * * *'
 jobs:
   release:
     runs-on: ubuntu-latest
