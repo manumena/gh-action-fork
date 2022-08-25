@@ -23,7 +23,7 @@ jobs:
     needs: release
     if: ${{ success() }}
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - name: get latest release and export as GITHUB_REF
         run:  echo "GIT_TAG=refs/tags/$(git tag | sort -V | tail -1)" > $GITHUB_ENV
       - name: NPM Publish
