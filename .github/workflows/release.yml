@@ -1,27 +1,35 @@
-name: 'release'
 on:
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        description: dry run
-        type: boolean
-        required: false
-        default: false
-  # schedule:
-  #   - cron: '*/5 * * * *'
+  push:
+    branches: [ main ]
+
+name: Release and publish NPM package
 jobs:
+
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+
   release:
     runs-on: ubuntu-latest
     permissions: write-all
-    env:
-      EVENT: ${{ toJSON( github.event ) }}
+    needs: build
+    if: ${{ success() }}
     steps:
-      - run: echo "event = $EVENT"
-      - run: echo "REPOSITORY_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $1}')" >> $GITHUB_ENV
-        shell: bash
-      - run: echo "github env = $GITHUB_ENV"
-      - uses: decentraland/gh-action-release@fix/get-repo
+      - uses: decentraland/gh-action-release@0.3.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          dry_run: ${{ github.event.inputs.dry_run }}
-          repository: ${{ github.repository }}
+ 
+  publish:
+    runs-on: ubuntu-latest
+    needs: release
+    if: ${{ success() }}
+    steps:
+      - uses: actions/checkout@master
+      - name: get latest release and export as GITHUB_REF
+        run:  echo "GIT_TAG=refs/tags/$(git tag | sort -V | tail -1)" > $GITHUB_ENV
+      - name: NPM Publish
+        uses: hprivakos/oddish-action@3.0.1
+        with:
+          registry-url: 'https://registry.npmjs.org'
+          access: public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
